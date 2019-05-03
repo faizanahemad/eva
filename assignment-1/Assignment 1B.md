@@ -4,7 +4,7 @@
 
 - https://colab.research.google.com/drive/1vonfE5AXxV26NHC_venQKnAEDQ8SUw6i
 
-- `EVA_S1.ipynb` file in this folder
+- [EVA_S1.ipynb](https://github.com/faizanahemad/eva/blob/master/assignment-1/EVA_S1.ipynb) file in this folder
 
 ## Questions and Answers (In progress)
 
