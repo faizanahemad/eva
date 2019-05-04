@@ -6,7 +6,7 @@
 
 - [EVA_S1.ipynb](https://github.com/faizanahemad/eva/blob/master/assignment-1/EVA_S1.ipynb) file in this folder
 
-## Questions and Answers (In progress)
+## Questions and Answers 
 
 ### What are Channels and Kernels (according to EVA)?
 
