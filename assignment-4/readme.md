@@ -63,7 +63,7 @@
 - Regularization
 - Optimising Training Process
 
-**Arranging Points in Assignment in the Given thought order**
+### **Arranging Points in Assignment in the Given thought order**
 
 **Preprocessing**
 
