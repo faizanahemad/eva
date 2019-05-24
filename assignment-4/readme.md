@@ -13,6 +13,7 @@
 - Augmentation
 
 **Note:** List Down the learnings in each file at the end.
+
 **Imp Note** Use Train, Validation, Test Split (i.e. 3 splits), Do not optimise model on Test Split. None of our decisions should be based on performance on test set. Since in real world you will not see the test set beforehand.
 
 
@@ -65,9 +66,11 @@
 **Arranging Points in Assignment in the Given thought order**
 
 **Preprocessing**
-Image Normalization,
+
+1. Image Normalization,
 
 **Architecure**
+
 1. Receptive Field
 2. Kernels and how do we decide the number of kernels?
 3. 3x3 Convolutions,
@@ -82,10 +85,12 @@ Image Normalization,
 SoftMax,
 
 **Early Validation**
+
 12. How do we know our network is not going well, comparatively, very early
 13. When to add validation checks
 
 **Regularization**
+
 14. DropOut
 15. When do we introduce DropOut, or when do we know we have some overfitting
 16. Batch Normalization,
@@ -93,6 +98,7 @@ SoftMax,
 Number of Epochs and when to increase them,
 
 **Optimising Training**
+
 18. Batch Size, and effects of batch size
 19. Adam vs SGD
 20. Learning Rate,
