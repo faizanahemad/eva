@@ -100,13 +100,23 @@
 
 20. Batch Size, and effects of batch size
 21. Number of Epochs and when to increase them
-22. Adam vs SGD
+22. Adam vs SGD 
 23. Learning Rate,
 24. LR schedule and concept behind it
 25. ReduceLRonPlateau
 26. EarlyStopping
 
 
-
-
-
+# References
+- Optimisers
+    - [Keras Optimisers](https://keras.io/optimizers/)
+    - [AdaBound](https://medium.com/syncedreview/iclr-2019-fast-as-adam-good-as-sgd-new-optimizer-has-both-78e37e8f9a34)
+    - [Adam vs SGD](https://shaoanlu.wordpress.com/2017/05/29/sgd-all-which-one-is-the-best-optimizer-dogs-vs-cats-toy-experiment/)
+    - [Layer vs Batch Norm](https://datascience.stackexchange.com/questions/12956/paper-whats-the-difference-between-layer-normalization-recurrent-batch-normal)
+        - LayerNorm is not good for ConvNets
+        - [LayerNorm Explanation](http://mlexplained.com/2018/01/13/weight-normalization-and-layer-normalization-explained-normalization-in-deep-learning-part-2/)
+        - [Implementation in Keras](https://gist.github.com/udibr/7f46e790c9e342d75dcbd9b1deb9d940) 
+    - [How Does Batch Normalization Help Optimization? (No, It Is Not About Internal Covariate Shift)](https://shaoanlu.wordpress.com/2018/07/12/notes-for-paper-how-does-batch-normalization-help-optimization-no-it-is-not-about-internal-covariate-shift/)
+        - BN allows wider range of LR parameters
+        - BN reparametrizes the underlying optimization problem to make it more stable and smooth
+        
