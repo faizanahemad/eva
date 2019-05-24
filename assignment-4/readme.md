@@ -67,44 +67,44 @@
 
 **Preprocessing**
 
-1. Image Normalization,
+1. Image Normalization
 
 **Architecure**
 
-1. Receptive Field
-2. Kernels and how do we decide the number of kernels?
-3. 3x3 Convolutions,
-4. How many layers,
-5. 1x1 Convolutions,
-6. Concept of Transition Layers,
-7. Position of Transition Layer,
-8. MaxPooling,
-9. Position of MaxPooling,
-10. The distance of MaxPooling from Prediction,
-11. When do we stop convolutions and go ahead with a larger kernel or some other alternative (which we have not yet covered)
-SoftMax,
+2. Receptive Field
+3. Kernels and how do we decide the number of kernels?
+4. 3x3 Convolutions,
+5. How many layers,
+6. 1x1 Convolutions,
+7. Concept of Transition Layers,
+8. Position of Transition Layer,
+9. MaxPooling,
+10. Position of MaxPooling,
+11. The distance of MaxPooling from Prediction,
+12. When do we stop convolutions and go ahead with a larger kernel or some other alternative (which we have not yet covered)
+13. SoftMax
 
 **Early Validation**
 
-12. How do we know our network is not going well, comparatively, very early
-13. When to add validation checks
+14. How do we know our network is not going well, comparatively, very early
+15. When to add validation checks
 
 **Regularization**
 
-14. DropOut
-15. When do we introduce DropOut, or when do we know we have some overfitting
-16. Batch Normalization,
-17. The distance of Batch Normalization from Prediction, (Batch Normalization should be added before the predication layer)
-Number of Epochs and when to increase them,
+16. DropOut
+17. When do we introduce DropOut, or when do we know we have some overfitting
+18. Batch Normalization,
+19. The distance of Batch Normalization from Prediction, (Batch Normalization should be added before the predication layer)
 
 **Optimising Training**
 
-18. Batch Size, and effects of batch size
-19. Adam vs SGD
-20. Learning Rate,
-21. LR schedule and concept behind it
-22. ReduceLRonPlateau
-23. EarlyStopping
+20. Batch Size, and effects of batch size
+21. Number of Epochs and when to increase them
+22. Adam vs SGD
+23. Learning Rate,
+24. LR schedule and concept behind it
+25. ReduceLRonPlateau
+26. EarlyStopping
 
 
 
