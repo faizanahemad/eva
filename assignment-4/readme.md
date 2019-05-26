@@ -18,32 +18,43 @@
 
 
 ### Structuring our Approach
-- **1st File: Candidate Architectures**
+**1st File: Candidate Architectures**
+
     - Receptive field of full image
-    - MaxPool vs 1x1 with stride=2
+    - MaxPool vs strides=2
     - Stop at 4x4 or 5x5 or 6x6 or 7x7
     - Start with 16 vs 32 vs 64 (64 filters was a winner in assignment 3)
     - 10 Epochs
-    - Total candidate architectures in this file = `2x4x4 = 32`
-    - We will promote 8 architectures from here
     
+**Learnings**
+
+    - Stopping at 5x5, 6x6 and 8x8 works well
+    - Starting with 32 filters was good for Mnist
+    - Strides=2 and MaxPool both work well, Mnist is not enough to conclude
     
-- **2nd File: Regularization**
+**2nd File: Regularization**
+
     - Overfit here with more epochs (100 epochs)
     - Then try BN vs Dropout
     - Use both BN & Dropout
-    - Total Candidates from this file = `8x3 = 24` (8 from prev, 3 BN/Dropout/BN+Dropout)
-    - Again we will promote only 8 to next file based on performance and diversity
     
+**Learnings**
 
-- **3rd File: Improvements (Optimiser and EarlyStopping)**
+    - Dropout can be added just before prediction layer as well.
+    - **Imp:** After adding dropout, number of dead kernels reduced. As such dropout is not only good for regularization, but also in adding variety in learning
+    - ![Before Dropout]()
+    - ![After Dropout]()
+
+**3rd File: Improvements (Optimiser and EarlyStopping)**
+
     - Adam vs Fine tuned SGD (SGD may be better since recent papers use this)
-    - Use ES with validation data. Find right num epochs. 
-    - Retrain model with all data with right num epochs
-    - Total Candidates from this file: `8x2 = 16`
-    - We will take 4 from Adam and 4 from SGD = 8.
+    - Use ES with validation data. Find right num epochs.
+    - Use Gradient clipping and ReduceLRonPlateau
+    - Play with BatchSize
+    
  
- - **4th File: Improvements part 2 (play with LR)**
+ **4th File: Improvements part 2 (play with LR)**
+ 
     - Initial LR and LR scheduling vs Use LR decay in Adam and SGD
     - Use ReduceLRonPlateau
 
