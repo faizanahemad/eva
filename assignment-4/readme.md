@@ -100,7 +100,10 @@
     - [Resnet vs Fishnet](https://stats.stackexchange.com/questions/387482/pooling-vs-stride-for-downsampling)
     - [Geoff Hinton on MaxPooling](https://mirror2image.wordpress.com/2014/11/11/geoffrey-hinton-on-max-pooling-reddit-ama/)
 9. MaxPooling,
+    - Useful to provide Translation Invariance (Doubtful in new studies)
+    - Reduces dimension of channel and allows use to use less layers and params
 10. Position of MaxPooling,
+    - After 2/3/4 conv layers once we have formed a significant feature, or 11x11 receptive field.
 11. The distance of MaxPooling from Prediction,
     - at least 2/3 layers away, else information loss happens
 12. When do we stop convolutions and go ahead with a larger kernel or some other alternative (which we have not yet covered)
@@ -109,7 +112,9 @@
 **Early Validation**
 
 14. How do we know our network is not going well, comparatively, very early
+    - Use validation split and see if our validation acc is decreasing
 15. When to add validation checks
+    - If your final network does not do well, we need to see if our network was able to reduce validation acc during training.
 
 **Regularization**
 
