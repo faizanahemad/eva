@@ -42,8 +42,12 @@ _Learning_
 
     - Dropout can be added just before prediction layer as well.
     - **Imp:** After adding dropout, number of dead kernels reduced. As such dropout is not only good for regularization, but also in adding variety in learning
-    - ![Before Dropout](https://github.com/faizanahemad/eva/raw/master/assignment-4/1st_layer_32x32_before_dropout.png)
-    - ![After Dropout](https://github.com/faizanahemad/eva/raw/master/assignment-4/1st_layer_32x32_after_dropout.png)
+
+Before Dropout
+![Before Dropout](https://github.com/faizanahemad/eva/raw/master/assignment-4/1st_layer_32x32_before_dropout.png)
+
+After Dropout (See more kernels active compared to above)
+![After Dropout](https://github.com/faizanahemad/eva/raw/master/assignment-4/1st_layer_32x32_after_dropout.png)
 
 #### 3rd File: Improvements (Optimiser and EarlyStopping)**
 
