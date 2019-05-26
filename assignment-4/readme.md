@@ -18,7 +18,7 @@
 
 
 ### Structuring our Approach
-**1st File: Candidate Architectures**
+#### 1st File: Candidate Architectures**
 
     - Receptive field of full image
     - MaxPool vs strides=2
@@ -26,26 +26,26 @@
     - Start with 16 vs 32 vs 64 (64 filters was a winner in assignment 3)
     - 10 Epochs
     
-**Learnings**
+_Learnings_
 
     - Stopping at 5x5, 6x6 and 8x8 works well
     - Starting with 32 filters was good for Mnist
     - Strides=2 and MaxPool both work well, Mnist is not enough to conclude
     
-**2nd File: Regularization**
+#### 2nd File: Regularization**
 
     - Overfit here with more epochs (100 epochs)
     - Then try BN vs Dropout
     - Use both BN & Dropout
     
-**Learnings**
+_Learning_
 
     - Dropout can be added just before prediction layer as well.
     - **Imp:** After adding dropout, number of dead kernels reduced. As such dropout is not only good for regularization, but also in adding variety in learning
-    - ![Before Dropout]()
-    - ![After Dropout]()
+    - ![Before Dropout](https://github.com/faizanahemad/eva/raw/master/assignment-4/1st_layer_32x32_before_dropout.png)
+    - ![After Dropout](https://github.com/faizanahemad/eva/raw/master/assignment-4/1st_layer_32x32_after_dropout.png)
 
-**3rd File: Improvements (Optimiser and EarlyStopping)**
+#### 3rd File: Improvements (Optimiser and EarlyStopping)**
 
     - Adam vs Fine tuned SGD (SGD may be better since recent papers use this)
     - Use ES with validation data. Find right num epochs.
@@ -53,13 +53,13 @@
     - Play with BatchSize
     
  
- **4th File: Improvements part 2 (play with LR)**
+#### 4th File: Improvements part 2 (play with LR)**
  
     - Initial LR and LR scheduling vs Use LR decay in Adam and SGD
     - Use ReduceLRonPlateau
 
 
-#### Small thoughts on over fitting and Mnist
+### Small thoughts on over fitting and Mnist
 
 - Over fitting your training data is good if you know that your test set looks like your training data
 - In case of Mnist this is true.
@@ -68,6 +68,7 @@
 # Thinking and Ordering the Points of Consideration
 
 ### Order in My mind
+
 - Preprocessing/Augmentation
 - Architecture
 - Early Validation
