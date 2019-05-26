@@ -107,6 +107,11 @@
 11. The distance of MaxPooling from Prediction,
     - at least 2/3 layers away, else information loss happens
 12. When do we stop convolutions and go ahead with a larger kernel or some other alternative (which we have not yet covered)
+    - Once you just have few pixels like less than 7x7.
+    - In 5x5 if you convolve 3x3 middle pixel is seen 9 times, for 7x7 middle pixel is seen 4 times. So This causes the mid pixel to become too important and hence issues.
+    - The info in side pixels is drowned since middle pixel takes all attention
+    - Use Padding
+    - Use Strides=2 towards end may also help. 
 13. SoftMax
 
 **Early Validation**
