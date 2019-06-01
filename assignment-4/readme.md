@@ -66,8 +66,14 @@ _Learning_
  
 #### 4th File: Improvements part 2 (play with LR)**
  
-    - LR scheduling vs Use LR decay in Adam and SGD
-    - Use Gradient clipping
+    - Use custom Loss Fn
+        - We penalize filters which are highly correlated
+    - Use SpatialDropout2D
+    
+_Learning_
+    
+    - Custom loss fn does not give provable gains on MNist with our own architectures.
+    - SpatialDroopout2D does not perform any better than normal dropout.
 
 
 ### Small thoughts on over fitting and Mnist
