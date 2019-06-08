@@ -1,5 +1,7 @@
 # Results 
-- **Assignment 6A:** 84.4% using 56k Parameters (Round 8 - Experiment 3)
+### **Assignment 6A**
+
+- 84.4% using 56k Parameters (Round 8 - Experiment 3)
 - One Cycle LR and cyclic LR are good techniques and helped get last 5%
     - One Cycle LR seemed easier to use and provided more gains
 - DepthWise Convs along with normal convs produced best results. Make the layer with less kernels as normal conv. 
@@ -17,6 +19,10 @@
         - `Conv(10,5)`
         - `Flatten()`
         - `Activation('softmax')`
+        
+- Training:
+    - OneCycleLR
+    - Random cutout regularization
 
 
 # References
