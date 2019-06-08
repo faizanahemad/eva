@@ -211,5 +211,8 @@ _Learning_
     - BN allows wider range of LR parameters
     - BN reparametrizes the underlying optimization problem to make it more stable and smooth
 - [Checkpointing Tutorial](https://machinelearningmastery.com/check-point-deep-learning-models-keras/)
-- [Keras  Custom Losses](https://towardsdatascience.com/advanced-keras-constructing-complex-custom-losses-and-metrics-c07ca130a618)
+- [Keras Custom Losses](https://towardsdatascience.com/advanced-keras-constructing-complex-custom-losses-and-metrics-c07ca130a618)
+- [Batch Size and Model Generalisation](https://arxiv.org/abs/1609.04836)
+    - Models with bigger batch sizes don't generalize well.
+- [How Does dropout make robust models](https://datascience.stackexchange.com/questions/37021/why-does-adding-a-dropout-layer-in-keras-improve-machine-learning-performance-g/37024#37024)
         
