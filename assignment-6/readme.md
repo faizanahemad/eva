@@ -55,4 +55,5 @@ Balanced Accuracy = 80.66%, Accuracy = 80.66%
         This happens when I have a binary classification problem where images in both the classes look almost the same, but there are very minute differences between them, so averaging out the features in that case fails right? 
         [ For example, A Siberian Husky and Alaskan Malamute ]
 - [Types on Convolutions](https://towardsdatascience.com/a-comprehensive-introduction-to-different-types-of-convolutions-in-deep-learning-669281e58215)
+- [Inter convertibility of FC and Conv Layers](http://cs231n.github.io/convolutional-networks/#fc)
 
