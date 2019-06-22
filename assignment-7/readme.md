@@ -33,26 +33,33 @@ Notice that this network has multiple receptive fields at the end.
 Instead of writing `Lambda` and `concatenate` everytime, we made custom functions which help us.
 Example:
 ```python
-def s2d_2(x):
-  return tf.space_to_depth(x, block_size=2)
-
-def s2d_4(x):
-  return tf.space_to_depth(x, block_size=4)
-
-def transition_layer(inputs, n_kernels=32):
-  out = Conv2D(n_kernels,
-                kernel_size=(1,1),
-                strides=1,
-                padding='same',
-                kernel_regularizer=l2(1e-4),
-                dilation_rate=1)(inputs)
-  out = BatchNormalization()(out)
-  out = Activation("relu")(out)
-  return out
+def concat_s2d(inputs):
+  final_inputs = None
+  if type(inputs)==list:
+    modified_inputs = []
+    mh,mw = 1e8,1e8 # min height and width
+    
+    for inpt in inputs:
+      s = K.int_shape(inpt)
+      h,w = s[-3],s[-2]
+      mh = min(mh,h)
+      mw = min(mw,w)
+      modified_inputs.append((inpt,h,w))
+    final_inputs = []
+    for inpt,h,w in modified_inputs:
+      assert h%mh==0 and w%mw==0 and h/mh == w/mw
+      if int(h/mh)>1:
+        inp = Lambda(lambda x: tf.space_to_depth(x, block_size=int(h/mh)))(inpt)
+      else:
+        inp = inpt
+      final_inputs.append(inp) 
+  inputs = concatenate(final_inputs) if type(inputs)==list and len(inputs)>1 else inputs
+  inputs = inputs[0] if type(inputs)==list and len(inputs)==1 else inputs
+  return inputs
 
 def conv_layer(inputs, n_kernels=32, kernel_size=(3,3), dropout=0.15,dilation_rate=1, padding='same', 
                skip_1=True,skip_2=True, enable_transition = True,transition_layer_kernels = 32):
-  inputs = concatenate(inputs) if len(inputs)>1 else inputs[0]
+  inputs = concat_s2d(inputs)
   inputs = transition_layer(inputs, transition_layer_kernels) if enable_transition else inputs
   out = Conv2D(n_kernels,
                 kernel_size=kernel_size,
@@ -63,15 +70,15 @@ def conv_layer(inputs, n_kernels=32, kernel_size=(3,3), dropout=0.15,dilation_ra
   out = BatchNormalization()(out)
   out = Activation("relu")(out)
   out = Dropout(dropout)(out) if dropout>0 else out
-  out_skip_1 = Lambda(s2d_2)(out) if skip_1 else None
-  out_skip_2 = Lambda(s2d_4)(out) if skip_2 else None
-  return out, out_skip_1, out_skip_2
+  return out
 ```
-Look at `conv_layer` function, it 
+In `concat_s2d` function, it 
 - takes an array of multiple outputs, 
-- concats them and 
-- gives out skip_connections as a result. 
+- concats them by doing appropriate `space_to_depth` conversions
+
+In `conv_layer` 
 - includes capability to do bottleneck (1x1), Dropout, BN.
+- uses `concat_s2d` to handle array of incoming inputs
 
 
 ### Results

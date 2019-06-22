@@ -56,4 +56,6 @@ Balanced Accuracy = 80.66%, Accuracy = 80.66%
         [ For example, A Siberian Husky and Alaskan Malamute ]
 - [Types on Convolutions](https://towardsdatascience.com/a-comprehensive-introduction-to-different-types-of-convolutions-in-deep-learning-669281e58215)
 - [Inter convertibility of FC and Conv Layers](http://cs231n.github.io/convolutional-networks/#fc)
-
+- [Resnet Code](https://medium.com/deepreview/review-of-deep-residual-learning-for-image-recognition-a92955acf3aa)
+- [One Cycle LR](https://towardsdatascience.com/finding-good-learning-rate-and-the-one-cycle-policy-7159fe1db5d6)
+- [Keras LR Finder](https://github.com/surmenok/keras_lr_finder)
