@@ -35,3 +35,4 @@ colorspace
 - [When Conventional Wisdom Fails: Revisiting Data Augmentation](https://towardsdatascience.com/when-conventional-wisdom-fails-revisiting-data-augmentation-for-self-driving-cars-4831998c5509)
 - [Channel Shuffle Code 1](https://github.com/scheckmedia/keras-shufflenet/blob/master/shufflenet.py) and [Channel Shuffle Code 2](https://github.com/minhto2802/keras-shufflenet/blob/master/shufflenet.py)
 - [Bag of Tricks for Image Classification](https://www.dlology.com/blog/bag-of-tricks-for-image-classification-with-convolutional-neural-networks-in-keras/)
+- [RICAP Git](https://github.com/koshian2/keras-ricap)
