@@ -3,6 +3,7 @@ from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras.initializers import Initializer
 from tensorflow.python.keras.backend import _regular_normalize_batch_in_training
 import tensorflow.keras.backend as K
+import tensorflow
 import tensorflow as tf
 import math
 import gc
@@ -210,7 +211,7 @@ import tensorflow
 import tensorflow as tf
 
 # Reset Keras Session
-def reset_keras():
+def reset_keras(config_builder=None):
     sess = get_session()
     clear_session()
     sess.close()
@@ -220,62 +221,11 @@ def reset_keras():
 
     # use the same config as you used to create the session
     # config = tensorflow.ConfigProto(log_device_placement=True, allow_soft_placement=True,)
-    config = tf.compat.v1.ConfigProto()
+    config = tf.compat.v1.ConfigProto() if config_builder is None else config_builder()
     config.gpu_options.per_process_gpu_memory_fraction = 1
     config.gpu_options.visible_device_list = "0"
     set_session(tensorflow.Session(config=config))
     
-
-def get_cutout_eraser(proba=1.0, s_l=0.04, s_h=0.06, r_1=0.35, r_2=1 / 0.35, 
-                      max_erasures_per_image=1, pixel_level=True):
-    """
-
-    :param p:
-    :param s_l: Minimum Area Proportion of Original that may be cut
-    :param s_h: Maximum Area Proportion of Original that may be cut
-    :param r_1: Min Aspect Ratio
-    :param r_2: Max Aspect Ratio
-    :param max_erasures_per_image:
-    :param pixel_level:
-    :return: Eraser to be used as Preprocessing Function
-    """
-    assert max_erasures_per_image >= 1
-
-    def eraser(input_img, proba=proba):
-        p_1 = np.random.rand()
-        if p_1 > proba:
-            return input_img
-        img_h, img_w, img_c = input_img.shape
-        shape = input_img.shape
-        
-        v_l = np.min(input_img)
-        v_h = np.max(input_img)
-        
-#         mx = np.random.randint(1, max_erasures_per_image + 1)
-        mx = max_erasures_per_image
-        for i in range(mx):
-            while True:
-                s = np.random.uniform(s_l, s_h) * img_h * img_w
-                r = np.random.uniform(r_1, r_2)
-                w = int(np.sqrt(s / r))
-                h = int(np.sqrt(s * r))
-                left = np.random.randint(0, img_w)
-                top = np.random.randint(0, img_h)
-
-                if left + w <= img_w and top + h <= img_h:
-                    break
-
-            if pixel_level:
-                c = np.random.uniform(v_l, v_h, (h, w, img_c))
-            else:
-                c = np.random.uniform(v_l, v_h)
-
-            input_img[top:top + h, left:left + w, :] = c
-        
-        return input_img
-
-    return eraser
-
 
 def init_pytorch(shape, dtype=tf.float32, partition_info=None):
     fan = np.prod(shape[:-1])
@@ -353,14 +303,18 @@ class ResBlkThin(tf.keras.Model):
 # Maxpool after 1st conv
 
 class FNet(tf.keras.Model):
-    def __init__(self, start_kernels=64, weight=0.125, sparse_bn = True, thin_block = False):
+    def __init__(self, start_kernels=64, weight=0.125, sparse_bn = True, thin_block = False, 
+                 enable_skip=False, enable_pool_before_skip=False):
         super().__init__()
         c = start_kernels
         pool = tf.keras.layers.MaxPooling2D()
         bn = not sparse_bn
         self.init_conv_bn = ConvBN(c, kernel_size=3, bn=bn)
-        self.skip = ConvBN(c,kernel_size=1, strides=1, bn=bn)
-        self.max_pool = tf.keras.layers.MaxPooling2D()
+        self.enable_skip = enable_skip
+        self.enable_pool_before_skip = enable_pool_before_skip
+        if enable_skip:
+            self.skip = ConvBN(c*2,kernel_size=1, strides=1, bn=bn)
+            self.max_pool = tf.keras.layers.MaxPooling2D()
         
         
         self.blk1 = ResBlkThin(c*2, pool, res = True, bn=bn) if thin_block else ResBlk(c*2, pool, res = True, bn=bn)
@@ -386,10 +340,15 @@ class FNet(tf.keras.Model):
         h = self.blk2(h)
         h = self.bn3(h) if self.sparse_bn else h
         
-        k = self.pool(self.skip(self.max_pool(h)))
+        if self.enable_skip:  
+            if self.enable_pool_before_skip:
+                k = self.pool(self.skip(self.max_pool(h)))
+            else:
+                k = self.pool(self.skip(h))
         h = self.blk3(h)
         h = self.pool(h)
-        h = tf.keras.layers.concatenate([h,k])
+        if self.enable_skip:
+            h = tf.keras.layers.concatenate([h,k])
         h = self.bn4(h) if self.sparse_bn else h
         
         h = self.linear(h) * self.weight
