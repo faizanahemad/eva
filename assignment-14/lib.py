@@ -324,6 +324,7 @@ class FNet(tf.keras.Model):
         self.linear = tf.keras.layers.Dense(10, kernel_initializer=init_pytorch, use_bias=False)
         self.weight = weight
         self.sparse_bn = sparse_bn
+        self.concat = tf.keras.layers.Concatenate()
         if sparse_bn:
             self.bn1 = BatchNorm(momentum=0.9, epsilon=1e-4)
             self.bn2 = BatchNorm(momentum=0.9, epsilon=1e-4)
@@ -348,7 +349,7 @@ class FNet(tf.keras.Model):
         h = self.blk3(h)
         h = self.pool(h)
         if self.enable_skip:
-            h = tf.keras.layers.concatenate([h,k])
+            h = self.concat([h,k])
         h = self.bn4(h) if self.sparse_bn else h
         
         h = self.linear(h) * self.weight
