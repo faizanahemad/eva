@@ -14,189 +14,6 @@ logger = logging.getLogger("App")
 logger.setLevel(logging.INFO)
 # logger.warning('This is a warning')
 
-#custom initializers to force float32
-class Ones32(Initializer):
-    def __call__(self, shape, dtype=None):
-        return K.constant(1, shape=shape, dtype='float32')
-
-class Zeros32(Initializer):
-    def __call__(self, shape, dtype=None):
-        return K.constant(0, shape=shape, dtype='float32')
-    
-
-
-class BatchNormalizationF16(Layer):
-
-    def __init__(self,
-                 axis=-1,
-                 momentum=0.99,
-                 epsilon=1e-4,
-                 center=True,
-                 scale=True,
-                 beta_initializer='zeros',
-                 gamma_initializer='ones',
-                 moving_mean_initializer='zeros',
-                 moving_variance_initializer='ones',
-                 beta_regularizer=None,
-                 gamma_regularizer=None,
-                 beta_constraint=None,
-                 gamma_constraint=None,
-                 **kwargs):
-        super(BatchNormalizationF16, self).__init__(**kwargs)
-        self.supports_masking = True
-        self.axis = axis
-        self.momentum = momentum
-        self.epsilon = epsilon
-        self.center = center
-        self.scale = scale
-        self.beta_initializer = initializers.get(beta_initializer)
-        self.gamma_initializer = initializers.get(gamma_initializer)
-        self.moving_mean_initializer = initializers.get(moving_mean_initializer)
-        self.moving_variance_initializer = (
-            initializers.get(moving_variance_initializer))
-        self.beta_regularizer = regularizers.get(beta_regularizer)
-        self.gamma_regularizer = regularizers.get(gamma_regularizer)
-        self.beta_constraint = constraints.get(beta_constraint)
-        self.gamma_constraint = constraints.get(gamma_constraint)
-
-    def build(self, input_shape):
-        dim = input_shape[self.axis]
-        if dim is None:
-            raise ValueError('Axis ' + str(self.axis) + ' of '
-                             'input tensor should have a defined dimension '
-                             'but the layer received an input with shape ' +
-                             str(input_shape) + '.')
-        self.input_spec = InputSpec(ndim=len(input_shape),
-                                    axes={self.axis: dim})
-        shape = (dim,)
-
-        if self.scale:
-            self.gamma = self.add_weight(shape=shape,
-                                         name='gamma',
-                                         initializer=self.gamma_initializer,
-                                         regularizer=self.gamma_regularizer,
-                                         constraint=self.gamma_constraint)
-        else:
-            self.gamma = None
-        if self.center:
-            self.beta = self.add_weight(shape=shape,
-                                        name='beta',
-                                        initializer=self.beta_initializer,
-                                        regularizer=self.beta_regularizer,
-                                        constraint=self.beta_constraint)
-        else:
-            self.beta = None
-        self.moving_mean = self.add_weight(
-            shape=shape,
-            name='moving_mean',
-            initializer=self.moving_mean_initializer,
-            trainable=False)
-        self.moving_variance = self.add_weight(
-            shape=shape,
-            name='moving_variance',
-            initializer=self.moving_variance_initializer,
-            trainable=False)
-        self.built = True
-
-    def call(self, inputs, training=None):
-        input_shape = K.int_shape(inputs)
-        # Prepare broadcasting shape.
-        ndim = len(input_shape)
-        reduction_axes = list(range(len(input_shape)))
-        del reduction_axes[self.axis]
-        broadcast_shape = [1] * len(input_shape)
-        broadcast_shape[self.axis] = input_shape[self.axis]
-
-        # Determines whether broadcasting is needed.
-        needs_broadcasting = (sorted(reduction_axes) != list(range(ndim))[:-1])
-
-        def normalize_inference():
-            if needs_broadcasting:
-                # In this case we must explicitly broadcast all parameters.
-                broadcast_moving_mean = K.reshape(self.moving_mean,
-                                                  broadcast_shape)
-                broadcast_moving_variance = K.reshape(self.moving_variance,
-                                                      broadcast_shape)
-                if self.center:
-                    broadcast_beta = K.reshape(self.beta, broadcast_shape)
-                else:
-                    broadcast_beta = None
-                if self.scale:
-                    broadcast_gamma = K.reshape(self.gamma,
-                                                broadcast_shape)
-                else:
-                    broadcast_gamma = None
-                return tf.nn.batch_normalization(#K.batch_normalization(
-                    inputs,
-                    broadcast_moving_mean,
-                    broadcast_moving_variance,
-                    broadcast_beta,
-                    broadcast_gamma,
-                    #axis=self.axis,
-                    self.epsilon)#epsilon=self.epsilon)
-            else:
-                return tf.nn.batch_normalization(#K.batch_normalization(
-                    inputs,
-                    self.moving_mean,
-                    self.moving_variance,
-                    self.beta,
-                    self.gamma,
-                    #axis=self.axis,
-                    self.epsilon)#epsilon=self.epsilon)
-
-        # If the learning phase is *static* and set to inference:
-        if training in {0, False}:
-            return normalize_inference()
-
-        # If the learning is either dynamic, or set to training:
-        normed_training, mean, variance = _regular_normalize_batch_in_training(#K.normalize_batch_in_training(
-            inputs, self.gamma, self.beta, reduction_axes,
-            epsilon=self.epsilon)
-
-        if K.backend() != 'cntk':
-            sample_size = K.prod([K.shape(inputs)[axis]
-                                  for axis in reduction_axes])
-            sample_size = K.cast(sample_size, dtype=K.dtype(inputs))
-
-            # sample variance - unbiased estimator of population variance
-            variance *= sample_size / (sample_size - (1.0 + self.epsilon))
-
-        self.add_update([K.moving_average_update(self.moving_mean,
-                                                 mean,
-                                                 self.momentum),
-                         K.moving_average_update(self.moving_variance,
-                                                 variance,
-                                                 self.momentum)],
-                        inputs)
-
-        # Pick the normalized form corresponding to the training phase.
-        return K.in_train_phase(normed_training,
-                                normalize_inference,
-                                training=training)
-
-    def get_config(self):
-        config = {
-            'axis': self.axis,
-            'momentum': self.momentum,
-            'epsilon': self.epsilon,
-            'center': self.center,
-            'scale': self.scale,
-            'beta_initializer': initializers.serialize(self.beta_initializer),
-            'gamma_initializer': initializers.serialize(self.gamma_initializer),
-            'moving_mean_initializer':
-                initializers.serialize(self.moving_mean_initializer),
-            'moving_variance_initializer':
-                initializers.serialize(self.moving_variance_initializer),
-            'beta_regularizer': regularizers.serialize(self.beta_regularizer),
-            'gamma_regularizer': regularizers.serialize(self.gamma_regularizer),
-            'beta_constraint': constraints.serialize(self.beta_constraint),
-            'gamma_constraint': constraints.serialize(self.gamma_constraint)
-        }
-        base_config = super(BatchNormalizationF16, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
-
-    def compute_output_shape(self, input_shape):
-        return input_shape
 ###### BatchNorm to be Used #####
 # BatchNorm = BatchNormalizationF16
 
@@ -233,68 +50,67 @@ def init_pytorch(shape, dtype=tf.float32, partition_info=None):
     return tf.random.uniform(shape, minval=-bound, maxval=bound, dtype=dtype)
 
 class ConvBN(tf.keras.Model):
-    def __init__(self, c_out, kernel_size=3, bn=False, strides=1):
+    def __init__(self, c_out, kernel_size=3, bn=False, strides=1, activation="relu", spatial_dropout=0.0, use_thin_conv=False):
         super().__init__()
-        self.conv = tf.keras.layers.Conv2D(filters=c_out, kernel_size=kernel_size,strides=strides, padding="SAME", kernel_initializer=init_pytorch, use_bias=False)
+        if use_thin_conv:
+            tf.keras.layers.SeparableConv2D(filters=c_out,depth_multiplier=2, kernel_size=kernel_size,
+                                            strides=strides, padding="SAME", kernel_initializer=init_pytorch, use_bias=False)
+        else:
+            self.conv = tf.keras.layers.Conv2D(filters=c_out, kernel_size=kernel_size,
+                                               strides=strides, padding="SAME", kernel_initializer=init_pytorch, use_bias=False)
         self.bn = bn
+        self.activation = activation
+        self.spatial_dropout = spatial_dropout
+        self.sd = tf.keras.layers.SpatialDropout2D(self.spatial_dropout)
+        
         if bn:
-            self.bn = BatchNorm(momentum=0.9, epsilon=1e-5)
+            self.bn = BatchNorm(momentum=0.9, epsilon=1e-7)
 
     def call(self, inputs):
         if self.bn:
-            res = tf.nn.relu(self.bn(self.conv(inputs)))
+            res = self.bn(self.conv(inputs))
         else:
-            res = tf.nn.relu(self.conv(inputs))
+            res = self.conv(inputs)
+            
+        if self.spatial_dropout>0:
+            res = self.sd(res)
+            
+        if self.activation=="relu":
+            res = tf.nn.relu(res)
         return res
     
-class ThinConvBN(tf.keras.Model):
-    def __init__(self, c_out, kernel_size=3, bn=False, strides=1):
-        super().__init__()
-        self.conv = tf.keras.layers.SeparableConv2D(filters=c_out,depth_multiplier=1, kernel_size=kernel_size,strides=strides, padding="SAME", kernel_initializer=init_pytorch, use_bias=False)
-        self.bn = bn
-        if bn:
-            self.bn = BatchNorm(momentum=0.9, epsilon=1e-5)
-
-    def call(self, inputs):
-        if self.bn:
-            res = tf.nn.relu(self.bn(self.conv(inputs)))
-        else:
-            res = tf.nn.relu(self.conv(inputs))
-        return res
     
 
 class ResBlk(tf.keras.Model):
-    def __init__(self, c_out, pool, res = False, bn=False):
+    def __init__(self, c_out, pool, res = False, bn=False, 
+                 no_activation_first_conv=False, residual_dropout=0.0,spatial_dropout=0.0, use_thin_conv=False):
         super().__init__()
-        self.conv_bn = ConvBN(c_out, bn=bn)
+        self.conv_bn = ConvBN(c_out, bn=bn, spatial_dropout=spatial_dropout,
+                              activation="linear" if no_activation_first_conv else "relu")
         self.pool = pool
         self.res = res
+        self.residual_dropout = residual_dropout
         if self.res:
-            self.res1 = ConvBN(c_out, bn=bn)
-            self.res2 = ConvBN(c_out, bn=bn)
+            self.res1 = ConvBN(c_out, bn=bn, use_thin_conv=use_thin_conv)
+            self.res2 = ConvBN(c_out, bn=bn, use_thin_conv=use_thin_conv)
 
     def call(self, inputs):
         h = self.pool(self.conv_bn(inputs))
         if self.res:
-            h = h + self.res2(self.res1(h))
+            p_1 = tf.random.uniform([1],minval=0,maxval=1,dtype=tf.dtypes.float32,)
+            cond = tf.keras.backend.less(p_1,self.residual_dropout)
+            cond = tf.broadcast_to(cond,[inputs.shape[0]])
+            h = tf.keras.backend.switch(cond,h,h + self.res2(self.res1(h)))
+            
+#             p_1 = np.random.rand()
+#             if p_1 >= self.residual_dropout:
+#                 print("Trying Residual")
+#                 h = h + self.res2(self.res1(h))
+#             else:
+#                 h = h
+#                 print("Not Trying Residual")
         return h
     
-    
-class ResBlkThin(tf.keras.Model):
-    def __init__(self, c_out, pool, res = False, bn=False ):
-        super().__init__()
-        self.conv_bn = ThinConvBN(c_out, bn=bn)
-        self.pool = pool
-        self.res = res
-        if self.res:
-            self.res1 = ThinConvBN(c_out, bn=bn)
-            self.res2 = ConvBN(c_out, bn=bn)
-
-    def call(self, inputs):
-        h = self.pool(self.conv_bn(inputs))
-        if self.res:
-            h = h + self.res2(self.res1(h))
-        return h
     
 
     
@@ -304,7 +120,8 @@ class ResBlkThin(tf.keras.Model):
 
 class FNet(tf.keras.Model):
     def __init__(self, start_kernels=64, weight=0.125, sparse_bn = True, thin_block = False, 
-                 enable_skip=False, enable_pool_before_skip=False):
+                 enable_skip=False, enable_pool_before_skip=False, no_activation_first_conv=False, 
+                 residual_dropout=0.0, spatial_dropout=0.0):
         super().__init__()
         c = start_kernels
         pool = tf.keras.layers.MaxPooling2D()
@@ -313,23 +130,31 @@ class FNet(tf.keras.Model):
         self.enable_skip = enable_skip
         self.enable_pool_before_skip = enable_pool_before_skip
         if enable_skip:
-            self.skip = ConvBN(c*2,kernel_size=1, strides=1, bn=bn)
-            self.max_pool = tf.keras.layers.MaxPooling2D()
+            self.skip = ConvBN(c*2,kernel_size=1, strides=1, bn=bn, activation="relu")
+            self.avg_pool = tf.keras.layers.AveragePooling2D()
+            self.max_pool = pool
         
         
-        self.blk1 = ResBlkThin(c*2, pool, res = True, bn=bn) if thin_block else ResBlk(c*2, pool, res = True, bn=bn)
-        self.blk2 = ResBlk(c*4, pool, bn=bn)
-        self.blk3 = ResBlkThin(c*8, pool, res = True, bn=bn) if thin_block else ResBlk(c*8, pool, res = True, bn=bn)
+        self.blk1 = ResBlk(c*2, pool, res = True, bn=bn,use_thin_conv=thin_block,
+                           no_activation_first_conv=no_activation_first_conv,
+                           residual_dropout=residual_dropout, spatial_dropout=spatial_dropout,)
+        self.blk2 = ResBlk(c*4, pool, bn=bn,use_thin_conv=thin_block,
+                           no_activation_first_conv=no_activation_first_conv, 
+                           residual_dropout=residual_dropout, spatial_dropout=spatial_dropout,)
+        self.blk3 = ResBlk(c*8, pool, res = True, bn=bn,use_thin_conv=thin_block, 
+                           no_activation_first_conv=no_activation_first_conv, 
+                           residual_dropout=residual_dropout, spatial_dropout=spatial_dropout,)
         self.pool = tf.keras.layers.GlobalMaxPool2D()
+        self.global_avg_pool = tf.keras.layers.GlobalAveragePooling2D()
         self.linear = tf.keras.layers.Dense(10, kernel_initializer=init_pytorch, use_bias=False)
         self.weight = weight
         self.sparse_bn = sparse_bn
         self.concat = tf.keras.layers.Concatenate()
         if sparse_bn:
-            self.bn1 = BatchNorm(momentum=0.9, epsilon=1e-4)
-            self.bn2 = BatchNorm(momentum=0.9, epsilon=1e-4)
-            self.bn3 = BatchNorm(momentum=0.9, epsilon=1e-4)
-            self.bn4 = BatchNorm(momentum=0.9, epsilon=1e-4)
+            self.bn1 = BatchNorm(momentum=0.9, epsilon=1e-7)
+            self.bn2 = BatchNorm(momentum=0.9, epsilon=1e-7)
+            self.bn3 = BatchNorm(momentum=0.9, epsilon=1e-7)
+            self.bn4 = BatchNorm(momentum=0.9, epsilon=1e-7)
 
     def call(self, x, y):
         h = self.init_conv_bn(x)
@@ -337,15 +162,16 @@ class FNet(tf.keras.Model):
         
         h = self.blk1(h)
         h = self.bn2(h) if self.sparse_bn else h
-        
+
+        if self.enable_skip:  
+            if self.enable_pool_before_skip:
+                k = self.pool(self.skip(self.avg_pool(h)))
+            else:
+                k = self.pool(self.skip(h))
+       
         h = self.blk2(h)
         h = self.bn3(h) if self.sparse_bn else h
         
-        if self.enable_skip:  
-            if self.enable_pool_before_skip:
-                k = self.pool(self.skip(self.max_pool(h)))
-            else:
-                k = self.pool(self.skip(h))
         h = self.blk3(h)
         h = self.pool(h)
         if self.enable_skip:
